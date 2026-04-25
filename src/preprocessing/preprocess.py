@@ -1,0 +1,88 @@
+import os
+import random
+from PIL import Image
+import numpy as np
+from tqdm import tqdm
+import shutil
+
+from utils import resize_image, resize_mask, normalize_image, random_rotation
+
+DATASETS = {
+    "urban": {
+        "img_dir": "dataset/train/Urban/images_png",
+        "mask_dir": "dataset/train/Urban/masks_png"
+    },
+    "rural": {
+        "img_dir": "dataset/train/Rural/images_png",
+        "mask_dir": "dataset/train/Rural/masks_png"
+    }
+}
+
+# controle le dataset
+SUBSET_SIZES = {
+    "urban": 150,
+    "rural": 50
+}
+
+OUTPUT_IMG_DIR = "data_processed/train/images"
+OUTPUT_MASK_DIR = "data_processed/train/masks"
+
+SEED = 42
+
+# clean output folders
+if os.path.exists(OUTPUT_IMG_DIR):
+    shutil.rmtree(OUTPUT_IMG_DIR)
+
+if os.path.exists(OUTPUT_MASK_DIR):
+    shutil.rmtree(OUTPUT_MASK_DIR)
+
+os.makedirs(OUTPUT_IMG_DIR, exist_ok=True)
+os.makedirs(OUTPUT_MASK_DIR, exist_ok=True)
+
+random.seed(SEED)
+
+samples = []
+
+for domain, paths in DATASETS.items():
+    images = [f for f in os.listdir(paths["img_dir"]) if f.endswith(".png")]
+
+    subset_size = SUBSET_SIZES.get(domain, len(images))  # fallback si non défini
+    selected = random.sample(images, min(subset_size, len(images)))
+
+    print(f"{domain}: {len(selected)} images selected")
+
+    for img_name in selected:
+        samples.append({
+            "domain": domain,
+            "img_name": img_name,
+            "img_path": os.path.join(paths["img_dir"], img_name),
+            "mask_path": os.path.join(paths["mask_dir"], img_name)
+        })
+
+random.shuffle(samples)
+
+print(f"\nTotal images to process: {len(samples)}")
+
+for sample in tqdm(samples):
+    domain = sample["domain"]
+    img_name = sample["img_name"]
+
+    if not os.path.exists(sample["mask_path"]):
+        print(f"Mask not found for {domain}/{img_name}, skipping...")
+        continue
+
+    img = Image.open(sample["img_path"]).convert("RGB")
+    mask = Image.open(sample["mask_path"])
+
+    img = resize_image(img)
+    mask = resize_mask(mask)
+
+    img, mask = random_rotation(img, mask)
+
+    img = normalize_image(img)
+
+    output_name = f"{domain}_{img_name}"
+
+    img_save = (img * 255).astype(np.uint8)
+    Image.fromarray(img_save).save(os.path.join(OUTPUT_IMG_DIR, output_name))
+    mask.save(os.path.join(OUTPUT_MASK_DIR, output_name))
