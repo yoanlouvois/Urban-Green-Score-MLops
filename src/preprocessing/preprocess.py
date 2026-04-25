@@ -1,20 +1,19 @@
 import os
 import random
 from PIL import Image
-import numpy as np
 from tqdm import tqdm
 import shutil
 
-from utils import resize_image, resize_mask, normalize_image, random_rotation
+from utils import resize_image, resize_mask, random_rotation
 
 DATASETS = {
     "urban": {
-        "img_dir": "dataset/train/Urban/images_png",
-        "mask_dir": "dataset/train/Urban/masks_png"
+        "img_dir": "data/raw/train/Urban/images_png",
+        "mask_dir": "data/raw/train/Urban/masks_png"
     },
     "rural": {
-        "img_dir": "dataset/train/Rural/images_png",
-        "mask_dir": "dataset/train/Rural/masks_png"
+        "img_dir": "data/raw/train/Rural/images_png",
+        "mask_dir": "data/raw/train/Rural/masks_png"
     }
 }
 
@@ -24,8 +23,8 @@ SUBSET_SIZES = {
     "rural": 50
 }
 
-OUTPUT_IMG_DIR = "data_processed/train/images"
-OUTPUT_MASK_DIR = "data_processed/train/masks"
+OUTPUT_IMG_DIR = "data/processed/train/images"
+OUTPUT_MASK_DIR = "data/processed/train/masks"
 
 SEED = 42
 
@@ -79,10 +78,7 @@ for sample in tqdm(samples):
 
     img, mask = random_rotation(img, mask)
 
-    img = normalize_image(img)
-
     output_name = f"{domain}_{img_name}"
 
-    img_save = (img * 255).astype(np.uint8)
-    Image.fromarray(img_save).save(os.path.join(OUTPUT_IMG_DIR, output_name))
+    img.save(os.path.join(OUTPUT_IMG_DIR, output_name))  
     mask.save(os.path.join(OUTPUT_MASK_DIR, output_name))
