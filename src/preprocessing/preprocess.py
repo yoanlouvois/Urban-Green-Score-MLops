@@ -3,40 +3,24 @@ import random
 from PIL import Image
 from tqdm import tqdm
 import shutil
+import sys
 
 from utils import resize_image, resize_mask, random_rotation
 
-DATASETS = {
-    "urban": {
-        "img_dir": "data/raw/train/Urban/images_png",
-        "mask_dir": "data/raw/train/Urban/masks_png"
-    },
-    "rural": {
-        "img_dir": "data/raw/train/Rural/images_png",
-        "mask_dir": "data/raw/train/Rural/masks_png"
-    }
-}
+# Allows imports from src/
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from config import DATASETS, SUBSET_SIZES, TRAIN_IMAGES_DIR, TRAIN_MASKS_DIR, SEED
 
-# controle le dataset
-SUBSET_SIZES = {
-    "urban": 150,
-    "rural": 50
-}
-
-OUTPUT_IMG_DIR = "data/processed/train/images"
-OUTPUT_MASK_DIR = "data/processed/train/masks"
-
-SEED = 42
 
 # clean output folders
-if os.path.exists(OUTPUT_IMG_DIR):
-    shutil.rmtree(OUTPUT_IMG_DIR)
+if os.path.exists(TRAIN_IMAGES_DIR):
+    shutil.rmtree(TRAIN_IMAGES_DIR)
 
-if os.path.exists(OUTPUT_MASK_DIR):
-    shutil.rmtree(OUTPUT_MASK_DIR)
+if os.path.exists(TRAIN_MASKS_DIR):
+    shutil.rmtree(TRAIN_MASKS_DIR)
 
-os.makedirs(OUTPUT_IMG_DIR, exist_ok=True)
-os.makedirs(OUTPUT_MASK_DIR, exist_ok=True)
+os.makedirs(TRAIN_IMAGES_DIR, exist_ok=True)
+os.makedirs(TRAIN_MASKS_DIR, exist_ok=True)
 
 random.seed(SEED)
 
@@ -80,5 +64,5 @@ for sample in tqdm(samples):
 
     output_name = f"{domain}_{img_name}"
 
-    img.save(os.path.join(OUTPUT_IMG_DIR, output_name))  
-    mask.save(os.path.join(OUTPUT_MASK_DIR, output_name))
+    img.save(os.path.join(TRAIN_IMAGES_DIR, output_name))  
+    mask.save(os.path.join(TRAIN_MASKS_DIR, output_name))
