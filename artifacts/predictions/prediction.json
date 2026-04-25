@@ -1,0 +1,13 @@
+{
+    "image_path": "data/raw/train/Urban/images_png/1410.png",
+    "green_score": 43.26231344853034,
+    "class_proportions": {
+        "background": 0.02912172160765975,
+        "building": 0.011276254860949133,
+        "road": 0.06793283955904451,
+        "water": 0.00017589275130676843,
+        "barren": 0.39145314178867635,
+        "forest": 0.0043476099616477325,
+        "agriculture": 0.4956925394707158
+    }
+}
