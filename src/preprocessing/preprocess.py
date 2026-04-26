@@ -2,6 +2,7 @@ import os
 import random
 import shutil
 import sys
+import argparse
 
 from PIL import Image
 from tqdm import tqdm
@@ -9,29 +10,36 @@ from tqdm import tqdm
 # Allows imports from src/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from config import RAW_DATA_DIR, PROCESSED_DATA_DIR, SPLITS, DOMAINS, SEED
+from config import SPLITS, DOMAINS
 from utils import resize_image, resize_mask, random_rotation
 
+def parse_args():
+    parser = argparse.ArgumentParser()
 
-random.seed(SEED)
+    parser.add_argument("--raw-data-dir", type=str, default="data/raw")
+    parser.add_argument("--output-dir", type=str, default="data/processed")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--num-workers", type=int, default=4)
+
+    return parser.parse_args()
 
 
-def clean_processed_dir():
-    if os.path.exists(PROCESSED_DATA_DIR):
-        shutil.rmtree(PROCESSED_DATA_DIR)
+def clean_processed_dir(output_dir):
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
 
     for split in SPLITS:
-        os.makedirs(os.path.join(PROCESSED_DATA_DIR, split, "images"), exist_ok=True)
-        os.makedirs(os.path.join(PROCESSED_DATA_DIR, split, "masks"), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, split, "images"), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, split, "masks"), exist_ok=True)
 
 
-def collect_samples():
+def collect_samples(raw_data_dir):
     samples = []
 
     for split in SPLITS:
         for domain in DOMAINS:
-            img_dir = os.path.join(RAW_DATA_DIR, split, domain, "images_png")
-            mask_dir = os.path.join(RAW_DATA_DIR, split, domain, "masks_png")
+            img_dir = os.path.join(raw_data_dir, split, domain, "images_png")
+            mask_dir = os.path.join(raw_data_dir, split, domain, "masks_png")
 
             if not os.path.exists(img_dir):
                 print(f"Image folder not found: {img_dir}, skipping...")
@@ -59,7 +67,7 @@ def collect_samples():
     return samples
 
 
-def preprocess_sample(sample):
+def preprocess_sample(sample, output_dir):
     split = sample["split"]
     domain = sample["domain"]
     img_name = sample["img_name"]
@@ -78,8 +86,8 @@ def preprocess_sample(sample):
 
     output_name = f"{domain}_{img_name}"
 
-    output_img_dir = os.path.join(PROCESSED_DATA_DIR, split, "images")
-    output_mask_dir = os.path.join(PROCESSED_DATA_DIR, split, "masks")
+    output_img_dir = os.path.join(output_dir, split, "images")
+    output_mask_dir = os.path.join(output_dir, split, "masks")
 
     img.save(os.path.join(output_img_dir, output_name))
 
@@ -88,18 +96,26 @@ def preprocess_sample(sample):
 
 
 def main():
-    clean_processed_dir()
+    args = parse_args()
 
-    samples = collect_samples()
+    random.seed(args.seed)
+
+    clean_processed_dir(args.output_dir)
+
+    samples = collect_samples(args.raw_data_dir)
 
     print(f"\nTotal images to process: {len(samples)}")
 
     from concurrent.futures import ProcessPoolExecutor
+    from functools import partial
 
-    with ProcessPoolExecutor(max_workers=4) as executor:
-        list(tqdm(executor.map(preprocess_sample, samples), total=len(samples)))
+    worker_fn = partial(preprocess_sample, output_dir=args.output_dir)
+
+    with ProcessPoolExecutor(max_workers=args.num_workers) as executor:
+        list(tqdm(executor.map(worker_fn, samples), total=len(samples)))
 
     print("\nPreprocessing completed.")
+    #to run : python src/preprocessing/preprocess.py --raw-data-dir data/raw --output-dir data/processed --num-workers 4
 
 
 if __name__ == "__main__":
