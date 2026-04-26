@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import argparse
 
 import numpy as np
 import torch
@@ -21,9 +22,14 @@ from config import (
 from training.model import UNet
 from scoring.green_score import compute_green_score
 
+def parse_args():
+    parser = argparse.ArgumentParser()
 
-IMAGE_PATH = "data/raw/test/Urban/images_png/5978.png"
-OUTPUT_DIR = "artifacts/predictions"
+    parser.add_argument("--image-path", type=str, required=True)
+    parser.add_argument("--model-path", type=str, default=BEST_MODEL_PATH)
+    parser.add_argument("--output-dir", type=str, default="artifacts/predictions")
+
+    return parser.parse_args()
 
 
 def get_mask_colormap():
@@ -85,15 +91,17 @@ def save_prediction_visualization(image, pred_mask, green_score, output_path):
 
 
 def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    args = parse_args()
+    os.makedirs(args.output_dir, exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    image, image_tensor = load_image(IMAGE_PATH)
+    image, image_tensor = load_image( args.image_path)
 
     model = UNet(in_channels=3, num_classes=NUM_CLASSES).to(device)
-    model.load_state_dict(torch.load(BEST_MODEL_PATH, map_location=device))
+    model.load_state_dict(torch.load(args.model_path, map_location=device))
 
     pred_mask = predict_mask(model, image_tensor, device)
 
@@ -103,12 +111,12 @@ def main():
     )
 
     print("\nPrediction result:")
-    print(f"Image: {IMAGE_PATH}")
+    print(f"Image: {args.image_path}")
     print(f"Green Score: {green_score:.2f}/100")
     print("\nClass proportions:")
     print(json.dumps(proportions, indent=4))
 
-    output_img_path = os.path.join(OUTPUT_DIR, "prediction.png")
+    output_img_path = os.path.join(args.output_dir, "prediction.png")
     save_prediction_visualization(
         image=image,
         pred_mask=pred_mask,
@@ -116,12 +124,12 @@ def main():
         output_path=output_img_path,
     )
 
-    output_json_path = os.path.join(OUTPUT_DIR, "prediction.json")
+    output_json_path = os.path.join(args.output_dir, "prediction.json")
 
     with open(output_json_path, "w") as f:
         json.dump(
             {
-                "image_path": IMAGE_PATH,
+                "image_path": args.image_path,
                 "green_score": green_score,
                 "class_proportions": proportions,
             },
@@ -131,6 +139,11 @@ def main():
 
     print(f"\nPrediction image saved to: {output_img_path}")
     print(f"Prediction JSON saved to: {output_json_path}")
+
+    '''python src/inference/predict.py `
+    --image-path data/raw/test/Urban/images_png/5978.png `
+    --model-path artifacts/models/best_model.pth `
+    --output-dir artifacts/predictions'''
 
 
 if __name__ == "__main__":
