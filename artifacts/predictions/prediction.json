@@ -1,13 +1,13 @@
 {
-    "image_path": "data/raw/train/Urban/images_png/1410.png",
-    "green_score": 43.26231344853034,
+    "image_path": "data/raw/test/Urban/images_png/5977.png",
+    "green_score": 21.037433522306745,
     "class_proportions": {
-        "background": 0.02912172160765975,
-        "building": 0.011276254860949133,
-        "road": 0.06793283955904451,
-        "water": 0.00017589275130676843,
-        "barren": 0.39145314178867635,
-        "forest": 0.0043476099616477325,
-        "agriculture": 0.4956925394707158
+        "background": 0.5708039890431027,
+        "building": 0.11062574870859689,
+        "road": 0.033080520986731164,
+        "water": 0.014104334688956882,
+        "barren": 0.08820454909620858,
+        "forest": 0.0012475297385147147,
+        "agriculture": 0.18193332773788903
     }
 }

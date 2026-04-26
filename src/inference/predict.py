@@ -22,7 +22,7 @@ from training.model import UNet
 from scoring.green_score import compute_green_score
 
 
-IMAGE_PATH = "data/raw/train/Urban/images_png/1410.png"
+IMAGE_PATH = "data/raw/test/Urban/images_png/5977.png"
 OUTPUT_DIR = "artifacts/predictions"
 
 

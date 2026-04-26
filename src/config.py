@@ -6,14 +6,6 @@ RAW_DATA_DIR = "data/raw"
 SPLITS = ["train", "val", "test"]
 DOMAINS = ["Urban", "Rural"]
 
-SEED = 42
-
-# Optionnel : à utiliser plus tard côté train, pas dans preprocess
-SUBSET_SIZES = {
-    "Urban": 20,
-    "Rural": 5,
-}
-
 # ========================
 # DATA (PROCESSED)
 # ========================
@@ -31,6 +23,27 @@ LAST_MODEL_PATH = "artifacts/models/last_model.pth"
 # ========================
 # TRAINING
 # ========================
+
+SUBSET_SIZES = {
+    "train": {
+        "Urban": 20,
+        "Rural": 5,
+    },
+    "val": {
+        "Urban": 4,
+        "Rural": 1,
+    },
+    "eval": {
+        "Urban": 4,
+        "Rural": 1,
+    },
+}
+
+TRAIN_IMAGES_DIR = "data/processed/train/images"
+TRAIN_MASKS_DIR = "data/processed/train/masks"
+
+VAL_IMAGES_DIR = "data/processed/val/images"
+VAL_MASKS_DIR = "data/processed/val/masks"
 
 NUM_CLASSES = 8
 IGNORE_INDEX = 0

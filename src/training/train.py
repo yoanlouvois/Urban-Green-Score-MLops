@@ -3,7 +3,7 @@ import sys
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
 # Allows imports from src/
@@ -21,6 +21,9 @@ from config import (
     NUM_EPOCHS,
     LEARNING_RATE,
     NUM_WORKERS,
+    VAL_IMAGES_DIR,
+    VAL_MASKS_DIR,
+    SUBSET_SIZES,
 )
 
 from training.dataset import UrbanGreenDataset
@@ -64,6 +67,22 @@ def validate_one_epoch(model, dataloader, criterion, device):
 
     return running_loss / len(dataloader)
 
+def make_domain_subset(dataset, subset_sizes, split_name):
+    selected_indices = []
+    counts = {domain: 0 for domain in subset_sizes}
+
+    for idx, img_name in enumerate(dataset.image_files):
+        for domain, max_count in subset_sizes.items():
+            if img_name.startswith(domain + "_") and counts[domain] < max_count:
+                selected_indices.append(idx)
+                counts[domain] += 1
+                break
+
+    print(f"{split_name.capitalize()} subset used:")
+    for domain, count in counts.items():
+        print(f"  {domain}: {count}/{subset_sizes[domain]}")
+
+    return Subset(dataset, selected_indices)
 
 def main():
     os.makedirs(MODEL_OUTPUT_DIR, exist_ok=True)
@@ -71,19 +90,30 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    dataset = UrbanGreenDataset(
-        images_dir=TRAIN_IMAGES_DIR,
-        masks_dir=TRAIN_MASKS_DIR,
+    full_train_dataset = UrbanGreenDataset(
+    images_dir=TRAIN_IMAGES_DIR,
+    masks_dir=TRAIN_MASKS_DIR,
     )
 
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-
-    train_dataset, val_dataset = random_split(
-        dataset,
-        [train_size, val_size],
-        generator=torch.Generator().manual_seed(42),
+    train_dataset = make_domain_subset(
+    dataset=full_train_dataset,
+    subset_sizes=SUBSET_SIZES["train"],
+    split_name="train",
     )
+
+    full_val_dataset = UrbanGreenDataset(
+    images_dir=VAL_IMAGES_DIR,
+    masks_dir=VAL_MASKS_DIR,
+    )
+
+    val_dataset = make_domain_subset(
+        dataset=full_val_dataset,
+        subset_sizes=SUBSET_SIZES["val"],
+        split_name="val",
+    )
+
+    print(f"Train samples: {len(train_dataset)}")
+    print(f"Val samples:   {len(val_dataset)}")
 
     train_loader = DataLoader(
         train_dataset,

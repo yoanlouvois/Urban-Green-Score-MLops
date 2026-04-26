@@ -3,19 +3,20 @@ import sys
 import json
 
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import (
-    TRAIN_IMAGES_DIR,
-    TRAIN_MASKS_DIR,
+    VAL_IMAGES_DIR,
+    VAL_MASKS_DIR,
     BEST_MODEL_PATH,
     NUM_CLASSES,
     IGNORE_INDEX,
     BATCH_SIZE,
     NUM_WORKERS,
+    SUBSET_SIZES,
 )
 
 from training.dataset import UrbanGreenDataset
@@ -82,24 +83,39 @@ def evaluate_model(model, dataloader, device):
     }
 
 
+def make_domain_subset(dataset, subset_sizes, split_name):
+    selected_indices = []
+    counts = {domain: 0 for domain in subset_sizes}
+
+    for idx, img_name in enumerate(dataset.image_files):
+        for domain, max_count in subset_sizes.items():
+            if img_name.startswith(domain + "_") and counts[domain] < max_count:
+                selected_indices.append(idx)
+                counts[domain] += 1
+                break
+
+    print(f"{split_name.capitalize()} subset used:")
+    for domain, count in counts.items():
+        print(f"  {domain}: {count}/{subset_sizes[domain]}")
+
+    return Subset(dataset, selected_indices)
+
+
 def main():
     os.makedirs(os.path.dirname(OUTPUT_METRICS_PATH), exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    dataset = UrbanGreenDataset(
-        images_dir=TRAIN_IMAGES_DIR,
-        masks_dir=TRAIN_MASKS_DIR,
+    full_val_dataset = UrbanGreenDataset(
+    images_dir=VAL_IMAGES_DIR,
+    masks_dir=VAL_MASKS_DIR,
     )
 
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-
-    _, val_dataset = random_split(
-        dataset,
-        [train_size, val_size],
-        generator=torch.Generator().manual_seed(42),
+    val_dataset = make_domain_subset(
+        dataset=full_val_dataset,
+        subset_sizes=SUBSET_SIZES["eval"],
+        split_name="eval",
     )
 
     val_loader = DataLoader(
