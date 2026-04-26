@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import argparse
 
 import torch
 from torch.utils.data import DataLoader, Subset
@@ -9,8 +10,6 @@ from tqdm import tqdm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config import (
-    VAL_IMAGES_DIR,
-    VAL_MASKS_DIR,
     BEST_MODEL_PATH,
     NUM_CLASSES,
     IGNORE_INDEX,
@@ -30,6 +29,17 @@ from evaluation.metrics import (
 
 OUTPUT_METRICS_PATH = "artifacts/evaluation/metrics.json"
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--model-path", type=str, default=BEST_MODEL_PATH)
+    parser.add_argument("--val-dir", type=str, default="data/processed/val")
+    parser.add_argument("--output-dir", type=str, default="artifacts/evaluation")
+
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
+    parser.add_argument("--num-workers", type=int, default=NUM_WORKERS)
+
+    return parser.parse_args()
 
 def evaluate_model(model, dataloader, device):
     model.eval()
@@ -102,14 +112,18 @@ def make_domain_subset(dataset, subset_sizes, split_name):
 
 
 def main():
-    os.makedirs(os.path.dirname(OUTPUT_METRICS_PATH), exist_ok=True)
+
+    args = parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    output_metrics_path = os.path.join(args.output_dir, "metrics.json")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
     full_val_dataset = UrbanGreenDataset(
-    images_dir=VAL_IMAGES_DIR,
-    masks_dir=VAL_MASKS_DIR,
+        images_dir=os.path.join(args.val_dir, "images"),
+        masks_dir=os.path.join(args.val_dir, "masks"),
     )
 
     val_dataset = make_domain_subset(
@@ -120,23 +134,30 @@ def main():
 
     val_loader = DataLoader(
         val_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=NUM_WORKERS,
+        num_workers=args.num_workers,
     )
 
     model = UNet(in_channels=3, num_classes=NUM_CLASSES).to(device)
-    model.load_state_dict(torch.load(BEST_MODEL_PATH, map_location=device))
+    model.load_state_dict(torch.load(args.model_path, map_location=device))
 
     metrics = evaluate_model(model, val_loader, device)
 
     print("\nEvaluation metrics:")
     print(json.dumps(metrics, indent=4))
 
-    with open(OUTPUT_METRICS_PATH, "w") as f:
+    with open(output_metrics_path, "w") as f:
         json.dump(metrics, f, indent=4)
 
-    print(f"\nMetrics saved to: {OUTPUT_METRICS_PATH}")
+    print(f"\nMetrics saved to: {output_metrics_path}")
+
+    '''python src/evaluation/evaluate.py `
+    --model-path artifacts/models/best_model.pth `
+    --val-dir data/processed/val `
+    --output-dir artifacts/evaluation `
+    --batch-size 2 `
+    --num-workers 0'''
 
 
 if __name__ == "__main__":
