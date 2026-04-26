@@ -2,30 +2,23 @@
 # DATA (RAW)
 # ========================
 
-DATASETS = {
-    "urban": {
-        "img_dir": "data/raw/train/Urban/images_png",
-        "mask_dir": "data/raw/train/Urban/masks_png"
-    },
-    "rural": {
-        "img_dir": "data/raw/train/Rural/images_png",
-        "mask_dir": "data/raw/train/Rural/masks_png"
-    }
-}
-
-SUBSET_SIZES = {
-    "urban": 20,
-    "rural": 5
-}
+RAW_DATA_DIR = "data/raw"
+SPLITS = ["train", "val", "test"]
+DOMAINS = ["Urban", "Rural"]
 
 SEED = 42
+
+# Optionnel : à utiliser plus tard côté train, pas dans preprocess
+SUBSET_SIZES = {
+    "Urban": 20,
+    "Rural": 5,
+}
 
 # ========================
 # DATA (PROCESSED)
 # ========================
 
-TRAIN_IMAGES_DIR = "data/processed/train/images"
-TRAIN_MASKS_DIR = "data/processed/train/masks"
+PROCESSED_DATA_DIR = "data/processed"
 
 # ========================
 # MODEL OUTPUT
