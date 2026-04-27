@@ -1,16 +1,26 @@
 # urban-green-score-mlops
-End-to-end MLOps pipeline to compute an Urban Green Score from satellite imagery using AWS
+End-to-end MLOps pipeline to compute an Urban Green Score from satellite imagery using Pytorch, Docker, AWS Sagemaker, S3, Terraform and Cloudwatch
 
 ## Setup
 
 ```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+docker build -t urban-green .
 ```
 
 ### Run preprocessing
+
 ```bash
-python src/preprocessing/preprocess.py
+docker run --rm -v ${PWD}:/app urban-green python src/preprocessing/preprocess.py
+```
+
+### Run training
+
+```bash
+docker run --rm -v ${PWD}:/app urban-green python src/training/train.py
+```
+
+### Run evaluation 
+
+```bash
+docker run --rm -v ${PWD}:/app urban-green python src/evaluation/evaluate.py
 ```
