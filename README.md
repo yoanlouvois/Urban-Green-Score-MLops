@@ -40,3 +40,9 @@ docker run --rm -v ${PWD}:/app urban-green python src/training/train.py
 ```bash
 docker run --rm -v ${PWD}:/app urban-green python src/evaluation/evaluate.py
 ```
+
+### Test Green Score
+
+```bash
+docker run --rm -v ${PWD}:/app urban-green python src/inference/predict.py --image-path data/raw/test/<your image>
+```
