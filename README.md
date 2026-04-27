@@ -1,5 +1,21 @@
-# urban-green-score-mlops
-End-to-end MLOps pipeline to compute an Urban Green Score from satellite imagery using Pytorch, Docker, AWS Sagemaker, S3, Terraform and Cloudwatch
+# Urban Green Score - MLOps Pipeline
+
+End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite imagery using:
+
+- PyTorch (semantic segmentation - U-Net)
+- Docker (reproducible environments)
+- AWS (S3, SageMaker, CloudWatch)
+- Terraform (infrastructure as code)
+
+## Project Overview
+
+This project takes satellite images and:
+
+1. Preprocesses raw data
+2. Trains a segmentation model (U-Net)
+3. Evaluates predictions using segmentation metrics
+4. Computes a **Green Score** based on land usage (forest, agriculture, etc.)
+
 
 ## Setup
 
