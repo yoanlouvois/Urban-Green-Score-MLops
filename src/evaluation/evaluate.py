@@ -32,9 +32,21 @@ OUTPUT_METRICS_PATH = "artifacts/evaluation/metrics.json"
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--model-path", type=str, default=BEST_MODEL_PATH)
-    parser.add_argument("--val-dir", type=str, default="data/processed/val")
-    parser.add_argument("--output-dir", type=str, default="artifacts/evaluation")
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default=os.environ.get("MODEL_PATH", BEST_MODEL_PATH),
+    )
+    parser.add_argument(
+        "--val-dir",
+        type=str,
+        default=os.environ.get("SM_CHANNEL_VAL", "data/processed/val"),
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=os.environ.get("SM_OUTPUT_DATA_DIR", "artifacts/evaluation"),
+    )
 
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--num-workers", type=int, default=NUM_WORKERS)
@@ -116,6 +128,17 @@ def main():
     args = parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
+
+    print(f"Model path: {args.model_path}")
+    print(f"Val dir:    {args.val_dir}")
+    print(f"Output dir: {args.output_dir}")
+
+    if not os.path.exists(args.model_path):
+        raise FileNotFoundError(f"Model file not found: {args.model_path}")
+
+    if not os.path.exists(args.val_dir):
+        raise FileNotFoundError(f"Validation directory not found: {args.val_dir}")
+
     output_metrics_path = os.path.join(args.output_dir, "metrics.json")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -132,6 +155,9 @@ def main():
         split_name="eval",
     )
 
+    if len(val_dataset) == 0:
+        raise ValueError("Evaluation dataset is empty.")
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
@@ -144,6 +170,9 @@ def main():
 
     metrics = evaluate_model(model, val_loader, device)
 
+    # Juste avant le JSON dump
+    print(f"\n[RESULTS] Accuracy: {metrics['pixel_accuracy']:.4f} | Mean IoU: {metrics['mean_iou']:.4f}")
+    
     print("\nEvaluation metrics:")
     print(json.dumps(metrics, indent=4))
 

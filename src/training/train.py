@@ -26,9 +26,21 @@ from training.model import UNet
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--train-dir", type=str, default="data/processed/train")
-    parser.add_argument("--val-dir", type=str, default="data/processed/val")
-    parser.add_argument("--model-dir", type=str, default="artifacts/models")
+    parser.add_argument(
+        "--train-dir",
+        type=str,
+        default=os.environ.get("SM_CHANNEL_TRAIN", "data/processed/train"),
+    )
+    parser.add_argument(
+        "--val-dir",
+        type=str,
+        default=os.environ.get("SM_CHANNEL_VAL", "data/processed/val"),
+    )
+    parser.add_argument(
+        "--model-dir",
+        type=str,
+        default=os.environ.get("SM_MODEL_DIR", "artifacts/models"),
+    )
 
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--epochs", type=int, default=NUM_EPOCHS)
@@ -97,6 +109,16 @@ def main():
 
     os.makedirs(args.model_dir, exist_ok=True)
 
+    print(f"Train dir: {args.train_dir}")
+    print(f"Val dir:   {args.val_dir}")
+    print(f"Model dir: {args.model_dir}")
+
+    if not os.path.exists(args.train_dir):
+        raise FileNotFoundError(f"Train directory not found: {args.train_dir}")
+
+    if not os.path.exists(args.val_dir):
+        raise FileNotFoundError(f"Val directory not found: {args.val_dir}")
+
     best_model_path = os.path.join(args.model_dir, "best_model.pth")
     last_model_path = os.path.join(args.model_dir, "last_model.pth")
 
@@ -127,6 +149,12 @@ def main():
 
     print(f"Train samples: {len(train_dataset)}")
     print(f"Val samples:   {len(val_dataset)}")
+
+    if len(train_dataset) == 0:
+        raise ValueError("Train dataset is empty.")
+
+    if len(val_dataset) == 0:
+        raise ValueError("Validation dataset is empty.")
 
     train_loader = DataLoader(
         train_dataset,
@@ -167,8 +195,7 @@ def main():
             device=device,
         )
 
-        print(f"Train loss: {train_loss:.4f}")
-        print(f"Val loss:   {val_loss:.4f}")
+        print(f"Epoch [{epoch+1}/{args.epochs}] - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
 
         torch.save(model.state_dict(), last_model_path)
 

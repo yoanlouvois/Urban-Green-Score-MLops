@@ -25,8 +25,16 @@ def parse_args():
 
 
 def clean_processed_dir(output_dir):
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Clean only the content, not the SageMaker output directory itself
+    for item in os.listdir(output_dir):
+        item_path = os.path.join(output_dir, item)
+
+        if os.path.isdir(item_path):
+            shutil.rmtree(item_path)
+        else:
+            os.remove(item_path)
 
     for split in SPLITS:
         os.makedirs(os.path.join(output_dir, split, "images"), exist_ok=True)
