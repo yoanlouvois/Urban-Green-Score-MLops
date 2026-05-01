@@ -42,6 +42,13 @@ def parse_args():
         default=os.environ.get("SM_MODEL_DIR", "artifacts/models"),
     )
 
+    parser.add_argument(
+        "--use-subset",
+        action="store_true",
+        default=False,
+        help="Use subset sizes from config.py",
+    )
+
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--epochs", type=int, default=NUM_EPOCHS)
     parser.add_argument("--learning-rate", type=float, default=LEARNING_RATE)
@@ -130,22 +137,30 @@ def main():
         masks_dir=os.path.join(args.train_dir, "masks"),
     )
 
-    train_dataset = make_domain_subset(
-        dataset=full_train_dataset,
-        subset_sizes=SUBSET_SIZES["train"],
-        split_name="train",
-    )
+    if args.use_subset:
+        train_dataset = make_domain_subset(
+            dataset=full_train_dataset,
+            subset_sizes=SUBSET_SIZES["train"],
+            split_name="train",
+        )
+    else:
+        train_dataset = full_train_dataset
+        print("Train subset disabled: using all training images.")
 
     full_val_dataset = UrbanGreenDataset(
         images_dir=os.path.join(args.val_dir, "images"),
         masks_dir=os.path.join(args.val_dir, "masks"),
     )
 
-    val_dataset = make_domain_subset(
-        dataset=full_val_dataset,
-        subset_sizes=SUBSET_SIZES["val"],
-        split_name="val",
-    )
+    if args.use_subset:
+        val_dataset = make_domain_subset(
+            dataset=full_val_dataset,
+            subset_sizes=SUBSET_SIZES["val"],
+            split_name="val",
+        )
+    else:
+        val_dataset = full_val_dataset
+        print("Val subset disabled: using all validation images.")
 
     print(f"Train samples: {len(train_dataset)}")
     print(f"Val samples:   {len(val_dataset)}")
