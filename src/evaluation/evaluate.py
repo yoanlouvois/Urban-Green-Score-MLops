@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import argparse
+import tarfile
 
 import torch
 from torch.utils.data import DataLoader, Subset
@@ -29,6 +30,25 @@ from evaluation.metrics import (
 
 OUTPUT_METRICS_PATH = "artifacts/evaluation/metrics.json"
 
+def resolve_model_path(model_path):
+    if model_path.endswith(".tar.gz"):
+        extract_dir = "/tmp/model"
+        os.makedirs(extract_dir, exist_ok=True)
+
+        with tarfile.open(model_path, "r:gz") as tar:
+            tar.extractall(extract_dir)
+
+        extracted_model_path = os.path.join(extract_dir, "best_model.pth")
+
+        if not os.path.exists(extracted_model_path):
+            raise FileNotFoundError(
+                f"best_model.pth not found inside extracted model artifact: {extract_dir}"
+            )
+
+        return extracted_model_path
+
+    return model_path
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -48,6 +68,13 @@ def parse_args():
         default=os.environ.get("SM_OUTPUT_DATA_DIR", "artifacts/evaluation"),
     )
 
+    parser.add_argument(
+        "--use-subset",
+        action="store_true",
+        default=False,
+        help="Use eval subset sizes from config.py",
+    )
+
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--num-workers", type=int, default=NUM_WORKERS)
 
@@ -59,11 +86,14 @@ def evaluate_model(model, dataloader, device):
     total_pixel_accuracy = 0.0
     num_batches = 0
 
+    total_batches = len(dataloader)
+    print(f"Starting evaluation on {total_batches} batches...", flush=True)
+
     iou_sums = {class_id: 0.0 for class_id in range(NUM_CLASSES) if class_id != IGNORE_INDEX}
     iou_counts = {class_id: 0 for class_id in range(NUM_CLASSES) if class_id != IGNORE_INDEX}
 
     with torch.no_grad():
-        for images, masks in tqdm(dataloader, desc="Evaluating"):
+        for batch_idx, (images, masks) in enumerate(tqdm(dataloader, desc="Evaluating"), start=1):
             images = images.to(device)
             masks = masks.to(device)
 
@@ -80,6 +110,14 @@ def evaluate_model(model, dataloader, device):
 
             total_pixel_accuracy += acc
             num_batches += 1
+
+            if batch_idx == 1 or batch_idx % 10 == 0 or batch_idx == total_batches:
+                running_acc = total_pixel_accuracy / num_batches
+                print(
+                    f"[Evaluation] Batch {batch_idx}/{total_batches} "
+                    f"- running_pixel_accuracy={running_acc:.4f}",
+                    flush=True,
+                )
 
             for class_id, iou in ious.items():
                 if iou is not None:
@@ -130,6 +168,10 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     print(f"Model path: {args.model_path}")
+
+    args.model_path = resolve_model_path(args.model_path)
+    print(f"Resolved model path: {args.model_path}")
+
     print(f"Val dir:    {args.val_dir}")
     print(f"Output dir: {args.output_dir}")
 
@@ -149,14 +191,21 @@ def main():
         masks_dir=os.path.join(args.val_dir, "masks"),
     )
 
-    val_dataset = make_domain_subset(
-        dataset=full_val_dataset,
-        subset_sizes=SUBSET_SIZES["eval"],
-        split_name="eval",
-    )
+    if args.use_subset:
+        val_dataset = make_domain_subset(
+            dataset=full_val_dataset,
+            subset_sizes=SUBSET_SIZES["eval"],
+            split_name="eval",
+        )
+    else:
+        val_dataset = full_val_dataset
+        print("Eval subset disabled: using all validation images.")
 
     if len(val_dataset) == 0:
         raise ValueError("Evaluation dataset is empty.")
+    
+    print(f"Evaluation samples: {len(val_dataset)}", flush=True)
+    print(f"Batch size: {args.batch_size}", flush=True)
 
     val_loader = DataLoader(
         val_dataset,
@@ -172,7 +221,7 @@ def main():
 
     # Juste avant le JSON dump
     print(f"\n[RESULTS] Accuracy: {metrics['pixel_accuracy']:.4f} | Mean IoU: {metrics['mean_iou']:.4f}")
-    
+
     print("\nEvaluation metrics:")
     print(json.dumps(metrics, indent=4))
 
