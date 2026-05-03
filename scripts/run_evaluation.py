@@ -61,7 +61,7 @@ def main():
         response = sm_client.create_processing_job(
             ProcessingJobName=job_name,
             RoleArn=ROLE_ARN,
-            StoppingCondition={"MaxRuntimeInSeconds": 3600},
+            StoppingCondition={"MaxRuntimeInSeconds": 10800},
             AppSpecification={
                 "ImageUri": IMAGE_URI,
                 "ContainerEntrypoint": ["python3", "src/evaluation/evaluate.py"],
