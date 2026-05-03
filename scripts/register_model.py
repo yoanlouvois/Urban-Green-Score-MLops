@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ROLE_ARN = os.getenv("SAGEMAKER_ROLE_ARN")
-BUCKET = os.getenv("S3_BUCKET").strip()
+BUCKET = os.getenv("S3_BUCKET")
 REGION = os.getenv("AWS_REGION")
 ACCOUNT_ID = os.getenv("AWS_ACCOUNT_ID")
 
