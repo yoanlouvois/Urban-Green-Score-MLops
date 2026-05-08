@@ -4,7 +4,7 @@ End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite ima
 
 - PyTorch (semantic segmentation - U-Net)
 - Docker (reproducible environments)
-- AWS (S3, SageMaker, CloudWatch)
+- AWS (S3, ECR, SageMaker, CloudWatch, Lambda, API Gateway)
 - Terraform (infrastructure as code)
 
 ## Project Overview
