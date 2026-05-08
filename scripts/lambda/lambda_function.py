@@ -12,7 +12,7 @@ ENDPOINT_NAME = os.getenv(
 
 def lambda_handler(event, context):
     try:
-        body = event["body"]
+        body = event.get("body")
 
         # API Gateway envoie souvent le body encodé
         if event.get("isBase64Encoded", False):
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
             Body=image_bytes,
         )
 
-        result = response["body"].read().decode("utf-8")
+        result = response["Body"].read().decode("utf-8")
 
         return {
             "statusCode": 200,
@@ -39,5 +39,4 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"error": str(e)}),
         }
-    
     
