@@ -2,10 +2,16 @@
 
 End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite imagery using:
 
-- PyTorch (semantic segmentation - U-Net)
-- Docker (reproducible environments)
-- AWS (S3, ECR, SageMaker, CloudWatch, Lambda, API Gateway)
-- Terraform (infrastructure as code)
+- **PyTorch** → semantic segmentation model (**U-Net**)
+- **Docker** → reproducible training/inference environments
+- **AWS**
+  - S3 → dataset & model artifact storage
+  - ECR → container registry
+  - SageMaker → processing, training, evaluation, deployment
+  - CloudWatch → logs & monitoring
+  - Lambda → serverless inference proxy
+  - API Gateway → HTTP endpoint exposure
+- **Terraform** → infrastructure as code
 
 ## Project Overview
 
@@ -19,30 +25,240 @@ This project takes satellite images and:
 
 ## Setup
 
-```bash
-docker build -t urban-green .
-```
+First, clone the repository and navigate into the project directory
 
-### Run preprocessing
+### 1. AWS Authentication
 
-```bash
-docker run --rm -v ${PWD}:/app urban-green python src/preprocessing/preprocess.py
-```
-
-### Run training
+Configure your AWS credentials locally:
 
 ```bash
-docker run --rm -v ${PWD}:/app urban-green python src/training/train.py
+aws configure
 ```
 
-### Run evaluation 
+You will need:
+
+- AWS Access Key
+- AWS Secret Key
+- Region: `eu-west-3`
+- Output format: `json`
+
+---
+
+### 2. Local Python Environment
+
+Create and activate a virtual environment:
 
 ```bash
-docker run --rm -v ${PWD}:/app urban-green python src/evaluation/evaluate.py
+python -m venv venv
 ```
 
-### Test Green Score
+Windows:
 
 ```bash
-docker run --rm -v ${PWD}:/app urban-green python src/inference/predict.py --image-path data/raw/test/<your image>
+.\venv\Scripts\activate
 ```
+
+Upgrade pip:
+
+```bash
+python -m pip install --upgrade pip
+```
+
+Install local dependencies:
+
+```bash
+pip install -r requirements-local.txt
+```
+
+This installs:
+
+- SageMaker SDK
+- boto3
+- Streamlit
+- requests
+- local utilities
+
+---
+
+### 3. Docker Authentication (AWS ECR)
+
+Login to your private ECR repository:
+
+```bash
+aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 147914447581.dkr.ecr.eu-west-3.amazonaws.com
+```
+
+---
+
+# Build & Push Docker Image
+
+Build the Docker image used by SageMaker:
+
+```bash
+docker build --platform linux/amd64 --provenance=false -t urban-green-score .
+```
+
+Tag the image:
+
+```bash
+docker tag urban-green-score:latest 147914447581.dkr.ecr.eu-west-3.amazonaws.com/urban-green-score:latest
+```
+
+Push the image to AWS ECR:
+
+```bash
+docker push 147914447581.dkr.ecr.eu-west-3.amazonaws.com/urban-green-score:latest
+```
+
+---
+
+# SageMaker Pipeline
+
+## 1. Data Processing
+
+Run SageMaker Processing job:
+
+```bash
+python src/scripts/run_processing.py
+```
+
+This step:
+
+- downloads raw data
+- preprocesses satellite images
+- resizes images
+- prepares masks
+- uploads processed dataset to S3
+
+---
+
+## 2. Model Training
+
+Launch SageMaker Training job:
+
+```bash
+python src/scripts/run_training.py
+```
+
+This step:
+
+- trains the U-Net segmentation model
+- stores model artifacts in S3
+- logs training metrics in CloudWatch
+
+---
+
+## 3. Model Evaluation
+
+Launch SageMaker Evaluation job:
+
+```bash
+python src/scripts/run_evaluation.py
+```
+
+This step:
+
+- evaluates model performance
+- computes IoU / accuracy metrics
+- saves evaluation artifacts
+
+---
+
+# Model Registry
+
+Register the trained model:
+
+```bash
+python src/scripts/model_registry/register_model.py
+```
+
+This creates a new version inside SageMaker Model Registry.
+
+---
+
+# Deploy Endpoint
+
+Deploy the latest approved model to SageMaker Endpoint:
+
+```bash
+python src/scripts/endpoint/deploy_endpoint.py
+```
+
+This creates:
+
+- SageMaker Model
+- Endpoint Configuration
+- Real-time Endpoint
+
+---
+
+# Test Endpoint Inference
+
+Test endpoint directly:
+
+```bash
+python src/scripts/endpoint/invoke_endpoint.py
+```
+
+This returns:
+
+- green score
+- class proportions
+- segmentation mask
+
+---
+
+# Lambda Deployment
+
+Package Lambda function:
+
+```bash
+Compress-Archive -Path lambda/lambda_function.py -DestinationPath lambda/lambda.zip -Force
+```
+
+Then upload `lambda.zip` manually in AWS Lambda.
+
+This Lambda acts as a proxy between API Gateway and SageMaker Endpoint.
+
+---
+
+# API Gateway Inference
+
+Architecture:
+
+Client → API Gateway → Lambda → SageMaker Endpoint
+
+Test API Gateway:
+
+```bash
+python src/scripts/api/invoke_api.py
+```
+
+---
+
+# Streamlit Demo (Optional)
+
+Run local UI:
+
+```bash
+streamlit run src/app/streamlit_app.py
+```
+
+Features:
+
+- upload satellite image
+- local inference mode
+- cloud inference mode
+- segmentation mask visualization
+- green score display
+
+---
+
+# Cleanup (Important)
+
+Delete the SageMaker endpoint after testing to avoid unnecessary costs:
+
+```bash
+python src/scripts/endpoint/delete_endpoint.py
+```
+
