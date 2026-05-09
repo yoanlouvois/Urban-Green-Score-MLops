@@ -42,6 +42,39 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown(
+    """
+    <style>
+        .block-container {
+            padding-top: 1.2rem;
+            padding-bottom: 1rem;
+            max-width: 1300px;
+        }
+
+        h1 {
+            font-size: 2rem !important;
+            margin-bottom: 0.2rem !important;
+        }
+
+        h2, h3 {
+            margin-top: 0.3rem !important;
+            margin-bottom: 0.3rem !important;
+        }
+
+        [data-testid="stImage"] img {
+            max-height: 430px;
+            object-fit: contain;
+        }
+
+        [data-testid="stSidebar"] {
+            min-width: 260px;
+            max-width: 260px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🌿 Urban Green Score")
 st.write("Analyse une image satellite et estime un score de végétation urbaine.")
 
@@ -171,7 +204,13 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
-    st.divider()
+    top_col1, top_col2, top_col3 = st.columns([2, 1, 2])
+
+    with top_col1:
+        run = st.button("Lancer l'analyse", type="primary", use_container_width=True)
+
+    result_placeholder = top_col2.empty()
+    status_placeholder = top_col3.empty()
 
     col1, col2 = st.columns(2)
 
@@ -179,21 +218,28 @@ if uploaded_file is not None:
         st.subheader("Image source")
         st.image(uploaded_file, use_container_width=True)
 
-    run = st.button("Lancer l'analyse", type="primary")
+    with col2:
+        st.subheader("Masque de segmentation")
+        mask_placeholder = st.empty()
 
     if run:
         try:
-            with st.spinner("Analyse en cours..."):
-                if mode == "Cloud API Gateway":
-                    result = predict_api(uploaded_file, api_url)
-                else:
-                    result = predict_local(uploaded_file, model_path)
+            with status_placeholder:
+                with st.spinner("Analyse en cours..."):
+                    if mode == "Cloud API Gateway":
+                        result = predict_api(uploaded_file, api_url)
+                    else:
+                        result = predict_local(uploaded_file, model_path)
 
-            with col2:
-                st.subheader("Masque de segmentation")
-                st.image(result["mask_img"], use_container_width=True)
+            result_placeholder.metric(
+                label="Green Score",
+                value=f"{result['green_score']:.2f}/100",
+            )
 
-            st.success(f"Green Score : {result['green_score']:.2f}/100")
+            mask_placeholder.image(
+                result["mask_img"],
+                use_container_width=True,
+            )
 
             st.write("### Proportions des classes")
             st.bar_chart(result["class_proportions"])
