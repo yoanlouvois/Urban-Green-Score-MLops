@@ -28,7 +28,7 @@ def main():
             TrainingJobName=job_name,
             RoleArn=ROLE_ARN,
             StoppingCondition={
-                "MaxRuntimeInSeconds": 21600
+                "MaxRuntimeInSeconds": 43200    # 12 heures
             },
             AlgorithmSpecification={
                 "TrainingImage": IMAGE_URI,
@@ -41,8 +41,8 @@ def main():
                     "--train-dir", "/opt/ml/input/data/train",
                     "--val-dir", "/opt/ml/input/data/val",
                     "--model-dir", "/opt/ml/model",
-                    "--batch-size", "2",
-                    "--epochs", "10",
+                    "--batch-size", "16",
+                    "--epochs", "30",
                     "--learning-rate", "0.0001",
                     "--num-workers", "4",
 
