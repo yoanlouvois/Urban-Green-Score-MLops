@@ -41,7 +41,7 @@ def main():
                     "--train-dir", "/opt/ml/input/data/train",
                     "--val-dir", "/opt/ml/input/data/val",
                     "--model-dir", "/opt/ml/model",
-                    "--batch-size", "16",
+                    "--batch-size", "8",
                     "--epochs", "30",
                     "--learning-rate", "0.0001",
                     "--num-workers", "4",
