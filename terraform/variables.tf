@@ -15,5 +15,5 @@ variable "sagemaker_endpoint_name" {
 
 variable "lambda_zip_path" {
     type = string
-    default = "../lambda/lambda.zip"
+    default = "../scripts/lambda/lambda.zip"
 }
