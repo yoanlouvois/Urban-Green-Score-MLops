@@ -12,6 +12,13 @@ End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite ima
   - Lambda → serverless inference proxy
   - API Gateway → HTTP endpoint exposure
 - **Terraform** → infrastructure as code
+- **Github Actions** → CI/CD pipelines
+
+The following diagram illustrates the system architecture : 
+
+<img width="1490" height="524" alt="Diagramme sans nom (1)" src="https://github.com/user-attachments/assets/722eac61-c8a0-4681-abf3-3c59baff4155" />
+
+
 
 ## Project Overview
 
