@@ -16,7 +16,8 @@ End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite ima
 
 The following diagram illustrates the system architecture : 
 
-<img width="1530" height="564" alt="Diagramme sans nom (7)" src="https://github.com/user-attachments/assets/65feaa4d-79f6-424b-b85f-8510dc93f50e" />
+<img width="1530" height="566" alt="Diagramme sans nom (9)" src="https://github.com/user-attachments/assets/951a5c2d-4be9-4d34-810c-5b5ac552c287" />
+
 
 
 ## Project Overview
