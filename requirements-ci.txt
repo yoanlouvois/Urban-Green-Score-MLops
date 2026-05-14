@@ -1,0 +1,6 @@
+numpy==1.26.4
+pillow==10.3.0
+pytest
+ruff
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
