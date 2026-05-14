@@ -3,3 +3,5 @@ boto3
 python-dotenv
 requests
 streamlit==1.57.0
+pytest
+ruff
