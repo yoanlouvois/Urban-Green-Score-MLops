@@ -1,6 +1,24 @@
 # Urban Green Score - MLOps Pipeline
 
-End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite imagery using:
+## Project Overview
+
+This project implements a production-grade MLOps pipeline designed to automate the calculation of an Urban Green Score from satellite imagery. By leveraging deep learning and cloud infrastructure, the system transforms raw geospatial data into actionable environmental insights.
+The core workflow includes:
+- Semantic Segmentation: Utilizing a U-Net architecture to identify land cover.
+- Green Scoring: Computing an environmental index based on detected vegetation (forest, agriculture, etc.).
+- Automated Lifecycle: From data preprocessing to serverless inference deployment.
+- The final model is accessible via a custom-built Streamlit interface, allowing users to upload satellite images and receive instant Green Score results : 
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/667bfe54-9d4a-49d8-87b8-a6ea8d2ae855" width="45%" />
+  <img src="https://github.com/user-attachments/assets/ecd3227a-e16d-443e-a5c5-137cf2e30208" width="45%" />
+</p>
+
+
+
+## MLOps Pipeline
+
+The architecture is built for scalability and reproducibility, using industry-standard tools:
 
 - **PyTorch** → semantic segmentation model (**U-Net**)
 - **Docker** → reproducible training/inference environments
@@ -17,18 +35,6 @@ End-to-end MLOps pipeline to compute an **Urban Green Score** from satellite ima
 The following diagram illustrates the system architecture : 
 
 <img width="1530" height="566" alt="Diagramme sans nom (9)" src="https://github.com/user-attachments/assets/951a5c2d-4be9-4d34-810c-5b5ac552c287" />
-
-
-
-## Project Overview
-
-This project takes satellite images and:
-
-1. Preprocesses raw data
-2. Trains a segmentation model (U-Net)
-3. Evaluates predictions using segmentation metrics
-4. Computes a **Green Score** based on land usage (forest, agriculture, etc.)
-
 
 ## Setup
 
