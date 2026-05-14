@@ -1,4 +1,3 @@
-import torch
 
 
 def pixel_accuracy(preds, targets, ignore_index=0):

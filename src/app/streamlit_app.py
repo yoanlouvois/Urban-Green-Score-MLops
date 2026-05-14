@@ -1,14 +1,12 @@
 import os
 import sys
 import io
-import json
 import base64
 
 import requests
 import streamlit as st
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 
 from PIL import Image
 from matplotlib.colors import ListedColormap
@@ -23,10 +21,10 @@ SRC_DIR = os.path.join(ROOT_DIR, "src")
 sys.path.append(ROOT_DIR)
 sys.path.append(SRC_DIR)
 
-from config import NUM_CLASSES, IGNORE_INDEX
-from preprocessing.utils import resize_image
-from training.model import UNet
-from scoring.green_score import compute_green_score
+from config import NUM_CLASSES, IGNORE_INDEX  # noqa: E402
+from preprocessing.utils import resize_image  # noqa: E402
+from training.model import UNet  # noqa: E402
+from scoring.green_score import compute_green_score  # noqa: E402
 
 
 DEFAULT_API_URL = os.getenv(

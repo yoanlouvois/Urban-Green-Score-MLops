@@ -20,7 +20,7 @@ def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     job_name = f"urban-green-preprocess-{timestamp}"
     
-    print(f"--- Envoi du Job via Boto3 (Low-Level) ---")
+    print("--- Envoi du Job via Boto3 (Low-Level) ---")
     print(f"Job Name: {job_name}")
 
     try:
@@ -71,7 +71,7 @@ def main():
         
         print("\n Succès ! Le job a été créé.")
         print(f"ARN du Job: {response['ProcessingJobArn']}")
-        print(f"\nTu peux suivre l'avancement ici :")
+        print("\nTu peux suivre l'avancement ici :")
         print(f"https://{REGION}.console.aws.amazon.com/sagemaker/home?region={REGION}#/processing-jobs/{job_name}")
 
     except Exception as e:

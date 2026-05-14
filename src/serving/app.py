@@ -2,7 +2,6 @@ import os
 import sys
 import io
 import base64
-import json
 
 import numpy as np
 import torch
