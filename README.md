@@ -39,67 +39,117 @@ The following diagram illustrates the system architecture :
 
 ## Setup
 
-First, clone the repository and navigate into the project directory
+### Prerequisites
 
-### 1. AWS Authentication
+To run this project, you will need:
 
-Configure your AWS credentials locally:
+- An AWS account with permissions to use SageMaker, Lambda, API Gateway, IAM, CloudWatch, ECR, and S3
+- Docker installed on your local machine
+- Terraform installed for infrastructure provisioning
+- Python 3.11+
+- AWS CLI installed and configured
+- GitHub account (optional, for CI/CD workflows)
 
+
+### Clone the Repository
+
+First, clone the repository and navigate into the project folder:
+```bash
+git clone https://github.com/<your-username>/Urban-Green-Score-MLops.git
+cd Urban-Green-Score-MLops
+```
+
+
+### Configure AWS CLI
+
+Authenticate your AWS account locally:
 ```bash
 aws configure
 ```
 
-You will need:
 
-- AWS Access Key
-- AWS Secret Key
-- Region: `eu-west-3`
-- Output format: `json`
+### Terraform Infrastructure Setup
 
----
+Navigate to the Terraform folder:
+```bash
+cd terraform
+```
+Update the `terraform.tfvars` file with your configuration.
 
-### 2. Local Python Environment
+Then initialize Terraform:
+```bash
+terraform init
+```
+Preview infrastructure changes:
+```bash
+terraform plan
+```
+Deploy infrastructure:
+```bash
+terraform apply
+```
+This will provision the following AWS resources:
 
-Create and activate a virtual environment:
+- S3 bucket for datasets and model artifacts
+- ECR repository for Docker images
+- IAM roles and policies
+- SageMaker model + endpoint configuration
+- SageMaker endpoint (optional via deploy_endpoint flag)
+- Lambda function
+- API Gateway
+- CloudWatch dashboard
+
+
+### Environment Variables
+
+Create a `.env` file at the root of the project using the provided template:
+```bash
+cp .env.example .env
+```
+Then configure your AWS and project variables inside `.env`.
+
+
+### Local Python Environment
+
+Create and activate a local virtual environment to run the SageMaker scripts, Streamlit app, and utility scripts locally.
+
+Create the virtual environment:
 
 ```bash
 python -m venv venv
-```
-
-Windows:
-
-```bash
 .\venv\Scripts\activate
-```
-
-Upgrade pip:
-
-```bash
 python -m pip install --upgrade pip
-```
-
-Install local dependencies:
-
-```bash
 pip install -r requirements-local.txt
 ```
+This installs SageMaker SDK, boto3, Streamlit, pytest and other local development utilities
 
-This installs:
 
-- SageMaker SDK
-- boto3
-- Streamlit
-- requests
-- local utilities
+### Dataset Setup
 
----
+Download the dataset manually and place it inside the data/raw/ folder.
+Current project structure expects something similar to:
+```
+data/
+  raw/
+    train/
+      images/
+      masks/
+    val/
+      images/
+      masks/
+    test/
+      images/
+```
+Then upload the raw dataset to your S3 bucket:
+```
+aws s3 cp data/raw s3://your-bucket-name/data/raw --recursive
+```
 
-### 3. Docker Authentication (AWS ECR)
+### Docker Authentication (AWS ECR)
 
-Login to your private ECR repository:
-
-```bash
-aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 147914447581.dkr.ecr.eu-west-3.amazonaws.com
+Authenticate Docker with your private ECR repository:
+```
+aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.eu-west-3.amazonaws.com
 ```
 
 ---
