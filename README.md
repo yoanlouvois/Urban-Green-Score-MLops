@@ -34,7 +34,8 @@ The architecture is built for scalability and reproducibility, using industry-st
 
 The following diagram illustrates the system architecture : 
 
-<img width="1530" height="566" alt="Diagramme sans nom (9)" src="https://github.com/user-attachments/assets/951a5c2d-4be9-4d34-810c-5b5ac552c287" />
+<img width="1530" height="566" alt="Diagramme sans nom (11)" src="https://github.com/user-attachments/assets/1c66d635-7819-43e6-b22f-e521035d0c03" />
+
 
 ## Setup
 
