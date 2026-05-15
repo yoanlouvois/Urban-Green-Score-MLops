@@ -15,6 +15,7 @@ The core workflow includes:
 </p>
 
 
+---
 
 ## MLOps Pipeline
 
@@ -34,12 +35,15 @@ The architecture is built for scalability and reproducibility, using industry-st
 
 The following diagram illustrates the system architecture : 
 
+
 <img width="1530" height="566" alt="Diagramme sans nom (11)" src="https://github.com/user-attachments/assets/1c66d635-7819-43e6-b22f-e521035d0c03" />
 
 
+---
+
 ## Setup
 
-### Prerequisites
+### 1. Prerequisites
 
 To run this project, you will need:
 
@@ -50,8 +54,7 @@ To run this project, you will need:
 - AWS CLI installed and configured
 - GitHub account (optional, for CI/CD workflows)
 
-
-### Clone the Repository
+### 2. Clone Repository
 
 First, clone the repository and navigate into the project folder:
 ```bash
@@ -59,16 +62,14 @@ git clone https://github.com/<your-username>/Urban-Green-Score-MLops.git
 cd Urban-Green-Score-MLops
 ```
 
-
-### Configure AWS CLI
+### 3. Configure AWS CLI
 
 Authenticate your AWS account locally:
 ```bash
 aws configure
 ```
 
-
-### Terraform Infrastructure Setup
+### 4. Provision Infrastructure
 
 Navigate to the Terraform folder:
 ```bash
@@ -99,8 +100,7 @@ This will provision the following AWS resources:
 - API Gateway
 - CloudWatch dashboard
 
-
-### Environment Variables
+### 5. Configure Environment Variables
 
 Create a `.env` file at the root of the project using the provided template:
 ```bash
@@ -108,8 +108,7 @@ cp .env.example .env
 ```
 Then configure your AWS and project variables inside `.env`.
 
-
-### Local Python Environment
+### 6. Setup Local Python Environment
 
 Create and activate a local virtual environment to run the SageMaker scripts, Streamlit app, and utility scripts locally.
 
@@ -123,8 +122,7 @@ pip install -r requirements-local.txt
 ```
 This installs SageMaker SDK, boto3, Streamlit, pytest and other local development utilities
 
-
-### Dataset Setup
+### 7. Upload Dataset
 
 Download the dataset manually and place it inside the data/raw/ folder.
 Current project structure expects something similar to:
@@ -141,20 +139,16 @@ data/
       images/
 ```
 Then upload the raw dataset to your S3 bucket:
-```
+```bash
 aws s3 cp data/raw s3://your-bucket-name/data/raw --recursive
 ```
 
-### Docker Authentication (AWS ECR)
+### 8. Docker Authentication
 
 Authenticate Docker with your private ECR repository:
-```
+```bash
 aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.eu-west-3.amazonaws.com
 ```
-
----
-
-# Build & Push Docker Image
 
 Build the Docker image used by SageMaker:
 
@@ -175,10 +169,10 @@ docker push 147914447581.dkr.ecr.eu-west-3.amazonaws.com/urban-green-score:lates
 ```
 
 ---
+&nbsp;
+## Pipelines
 
-# SageMaker Pipeline
-
-## 1. Data Processing
+### 1. Data Processing
 
 Run SageMaker Processing job:
 
@@ -186,17 +180,14 @@ Run SageMaker Processing job:
 python src/scripts/run_processing.py
 ```
 
-This step:
-
-- downloads raw data
+This stepdownloads raw data
 - preprocesses satellite images
 - resizes images
 - prepares masks
 - uploads processed dataset to S3
 
----
 
-## 2. Model Training
+### 2. Model Training
 
 Launch SageMaker Training job:
 
@@ -210,9 +201,8 @@ This step:
 - stores model artifacts in S3
 - logs training metrics in CloudWatch
 
----
 
-## 3. Model Evaluation
+### 3. Model Evaluation
 
 Launch SageMaker Evaluation job:
 
@@ -226,9 +216,7 @@ This step:
 - computes IoU / accuracy metrics
 - saves evaluation artifacts
 
----
-
-# Model Registry
+### 4. Model Registry
 
 Register the trained model:
 
@@ -238,14 +226,13 @@ python src/scripts/model_registry/register_model.py
 
 This creates a new version inside SageMaker Model Registry.
 
----
 
-# Deploy Endpoint
+### 5. Model Deployment
 
-Deploy the latest approved model to SageMaker Endpoint:
+If you want to deploy the SageMaker endpoint, set `deploy_endpoint=true` in `terraform.tfvars` or run:
 
 ```bash
-python src/scripts/endpoint/deploy_endpoint.py
+terraform apply -var="deploy_endpoint=true"
 ```
 
 This creates:
@@ -254,75 +241,77 @@ This creates:
 - Endpoint Configuration
 - Real-time Endpoint
 
----
+Use deploy_endpoint=false when you want to avoid endpoint costs.
 
-# Test Endpoint Inference
+### 5. Test Endpoint Inference
 
 Test endpoint directly:
 
 ```bash
-python src/scripts/endpoint/invoke_endpoint.py
-```
-
-This returns:
-
-- green score
-- class proportions
-- segmentation mask
-
----
-
-# Lambda Deployment
-
-Package Lambda function:
-
-```bash
-Compress-Archive -Path lambda/lambda_function.py -DestinationPath lambda/lambda.zip -Force
-```
-
-Then upload `lambda.zip` manually in AWS Lambda.
-
-This Lambda acts as a proxy between API Gateway and SageMaker Endpoint.
-
----
-
-# API Gateway Inference
-
-Architecture:
-
-Client → API Gateway → Lambda → SageMaker Endpoint
-
-Test API Gateway:
-
-```bash
-python src/scripts/api/invoke_api.py
-```
-
----
-
-# Streamlit Demo (Optional)
-
-Run local UI:
-
-```bash
 streamlit run src/app/streamlit_app.py
 ```
+You will be able to upload satellite image and calculate the green score using a local inference mode or using the API gateway route
 
-Features:
+### 6. Monitoring
 
-- upload satellite image
-- local inference mode
-- cloud inference mode
-- segmentation mask visualization
-- green score display
+This project uses Amazon CloudWatch to monitor deployed services.
+
+Tracked metrics:
+
+- Lambda invocations/errors
+- API Gateway requests/errors
+- SageMaker endpoint logs
+
+A CloudWatch dashboard is automatically provisioned with Terraform for quick monitoring and debugging.
+
+
+### 7. Cleanup 
+
+If you want to delete the SageMaker endpoint, set `deploy_endpoint=false` in `terraform.tfvars` or run:
+
+```bash
+terraform apply -var="deploy_endpoint=false"
+```
+
+---
+&nbsp;
+## CI/CD Pipeline
+
+This project uses GitHub Actions to automate testing, Docker deployment, and infrastructure validation.
+
+Required GitHub Secrets:
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- AWS_ACCOUNT_ID
+- ECR_REPOSITORY
+
+Pipeline Workflows:
+
+- CI (`ci.yml`)
+  - Runs on push and pull requests
+  - Executes lint checks
+  - Runs unit tests
+  - Validates Docker build
+
+- Deploy ECR (`deploy-ecr.yml`)
+  - Runs on push to main
+  - Builds Docker image
+  - Pushes image to Amazon ECR
+
+- Terraform Check (`terraform.yml`)
+  - Runs on pull requests
+  - Executes terraform fmt
+  - Runs terraform validate
+  - Runs terraform plan
+
+Every push or pull request automatically triggers the corresponding workflow.
+
+You can monitor workflow execution in the GitHub Actions dashboard.
 
 ---
 
-# Cleanup (Important)
-
-Delete the SageMaker endpoint after testing to avoid unnecessary costs:
-
-```bash
-python src/scripts/endpoint/delete_endpoint.py
-```
+## License
+This project is licensed under the MIT License. See the LICENSE file for more details.
 
