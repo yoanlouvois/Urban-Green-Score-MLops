@@ -124,9 +124,15 @@ This installs SageMaker SDK, boto3, Streamlit, pytest and other local developmen
 
 ### 7. Upload Dataset
 
-Download the dataset manually and place it inside the data/raw/ folder.
-Current project structure expects something similar to:
-```
+This project can work with any satellite semantic segmentation dataset containing images and masks.
+
+For this implementation, I personally used the **LoveDA Satellite Images Semantic Segmentation** dataset:  
+https://www.kaggle.com/datasets/alienxc137/loveda-satellite-images-semantic-segmentation
+
+Download the dataset manually and place it inside the `data/raw/` folder.
+
+Expected structure:
+```bash
 data/
   raw/
     train/
