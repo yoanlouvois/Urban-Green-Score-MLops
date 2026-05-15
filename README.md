@@ -21,17 +21,17 @@ The core workflow includes:
 
 The architecture is built for scalability and reproducibility, using industry-standard tools:
 
-- **PyTorch** → semantic segmentation model (**U-Net**)
-- **Docker** → reproducible training/inference environments
+- **PyTorch** : semantic segmentation model (**U-Net**)
+- **Docker** : reproducible training/inference environments
 - **AWS**
-  - S3 → dataset & model artifact storage
-  - ECR → container registry
-  - SageMaker → processing, training, evaluation, deployment
-  - CloudWatch → logs & monitoring
-  - Lambda → serverless inference proxy
-  - API Gateway → HTTP endpoint exposure
-- **Terraform** → infrastructure as code
-- **Github Actions** → CI/CD pipelines
+  - S3 : dataset & model artifact storage
+  - ECR : container registry
+  - SageMaker : processing, training, evaluation, deployment
+  - CloudWatch : logs & monitoring
+  - Lambda : serverless inference proxy
+  - API Gateway : HTTP endpoint exposure
+- **Terraform** : infrastructure as code
+- **Github Actions** : CI/CD pipelines
 
 The following diagram illustrates the system architecture : 
 
@@ -289,22 +289,9 @@ Required GitHub Secrets:
 
 Pipeline Workflows:
 
-- CI (`ci.yml`)
-  - Runs on push and pull requests
-  - Executes lint checks
-  - Runs unit tests
-  - Validates Docker build
-
-- Deploy ECR (`deploy-ecr.yml`)
-  - Runs on push to main
-  - Builds Docker image
-  - Pushes image to Amazon ECR
-
-- Terraform Check (`terraform.yml`)
-  - Runs on pull requests
-  - Executes terraform fmt
-  - Runs terraform validate
-  - Runs terraform plan
+- CI (`ci.yml`) : executes lint checks, runs unit tests and validates Docker build
+- Deploy ECR (`deploy-ecr.yml`) : builds Docker image, pushes image to Amazon ECR
+- Terraform Check (`terraform.yml`) : executes terraform fmt, runs terraform validate and runs terraform plan
 
 Every push or pull request automatically triggers the corresponding workflow.
 
